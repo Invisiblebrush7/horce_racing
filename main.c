@@ -11,6 +11,7 @@
 #define FALSE 0
 #define MAX_LEN 20 // Max length for names
 #define MAX_NUM 10 // Max number of horses
+#define MIN_NUM 2 // Min number of horses
 int numHorsesGlobal = 5;
 
 typedef struct globalInfo{
@@ -47,7 +48,6 @@ void* horseThread( void* args ){
   printf("-----%s starts to run!----\n", myHorse->myName);
   while(info.start == 1){
     myHorse->myPosition += rand() % 6;
-    sleep(2);
     if(winningCondition(myHorse->myPosition) && info.start != 0){
       info.start = 0;
       printf("\n");
@@ -57,12 +57,28 @@ void* horseThread( void* args ){
     } else {
       info.finalPositions[myHorse->id] = myHorse->myPosition;
     }
+    sleep(2);
   }
   return NULL;
 }
 
 
 int main(void) {
+  // How many horses are there in the race
+  printf("--------------------------------\n");
+  printf("Horse Racing\n");
+  printf("How many horses are allowed? (Min: %d): ", MIN_NUM);
+  scanf("%d", &numHorsesGlobal);
+  while(numHorsesGlobal > MAX_NUM || numHorsesGlobal < MIN_NUM){
+    printf("Should be between %d and %d: ", MIN_NUM, MAX_NUM);
+    scanf("%d", &numHorsesGlobal);
+  }
+  fflush(stdin);
+  
+  printf("--------------------------------\n");
+
+
+
   // Important Vars
 
   Horse horses[numHorsesGlobal];
@@ -70,13 +86,6 @@ int main(void) {
   info.start = 0;
   pthread_t myThreads[numHorsesGlobal];
 
-  // How many horses are there in the race
-  printf("--------------------------------\n");
-  printf("Horse Racing\n");
-  printf("How many horses are allowed? (Min: 5): ");
-  scanf("%d", &numHorsesGlobal);
-  fflush(stdin);
-  printf("--------------------------------\n");
 
   // Naming the Horses
   Horse *ptr = horses;
