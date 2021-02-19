@@ -12,16 +12,9 @@
 #define MAX_LEN 20 // Max length for names
 #define MAX_NUM 10 // Max number of horses
 #define MIN_NUM 2 // Min number of horses
+#define NUM_OF_FUNC 5
+#define LEN_OF_RACE 15
 int numHorsesGlobal = MIN_NUM;
-
-typedef struct globalInfo{
-  char names[MAX_NUM][MAX_LEN];
-  int personalHorse;
-  int bet;
-  int credits;
-  int finalPositions[MAX_NUM];
-  int start; // If start == 0, race hasnt started;
-} globalInfo;
 
 typedef struct Horse{
   int myPosition;
@@ -29,13 +22,51 @@ typedef struct Horse{
   int id;
 } Horse;
 
+typedef int (*myFunc)(Horse);
 
+typedef struct globalInfo{
+  char names[MAX_NUM][MAX_LEN];
+  myFunc functions[NUM_OF_FUNC];
+  int personalHorse;
+  int bet;
+  int credits;
+  int finalPositions[MAX_NUM];
+  int start; // If start == 0, race hasnt started;
+} globalInfo;
+
+int goodOutcome1(Horse myHorse){
+  int randomNumber = rand() % 6;
+  printf("++ %s has wings now!\n", myHorse.myName);
+  return randomNumber;
+}
+int goodOutcome2(Horse myHorse){
+  int randomNumber = rand() % 5;
+  printf("++ %s has one more leg now!\n", myHorse.myName);
+  return randomNumber;
+}
+int goodOutcome3(Horse myHorse){
+  int randomNumber = rand() % 4;
+  printf("++ %s got more will to live!\n", myHorse.myName);
+  return randomNumber;
+}
+int badOutcome1(Horse myHorse){
+  int randomNumber = rand() % 3;
+  printf("-- %s has encountered a snake! It has to wait now!\n", myHorse.myName);
+  sleep(randomNumber);
+  return 0;
+}
+int badOutcome2(Horse myHorse){
+  int randomNumber = rand() % 3;
+  printf("-- %s heard some music! It has to dance now!\n", myHorse.myName);
+  sleep(randomNumber);
+  return 0;
+}
 
 globalInfo info;
 
 int winningCondition(int horsePosition){
   
-  if(horsePosition >= 15){
+  if(horsePosition >= LEN_OF_RACE){
     return TRUE;
   }
   return FALSE;
@@ -43,17 +74,18 @@ int winningCondition(int horsePosition){
 
 void* horseThread( void* args ){
   Horse *myHorse = (Horse *)args;
+  // waiting for other horses to be ready...
   while(info.start == 0){}
-
   printf("-----%s starts to run!----\n", myHorse->myName);
   while(info.start == 1){
-    myHorse->myPosition += rand() % 6;
+    sleep(1);
+    myHorse->myPosition += info.functions[rand() % NUM_OF_FUNC](*myHorse);
     if(winningCondition(myHorse->myPosition) && info.start != 0){
       info.start = 0;
       printf("\n");
       printf("%s has made it to the end!\n", myHorse->myName);
       printf("\n");
-      info.finalPositions[myHorse->id] = 15;
+      info.finalPositions[myHorse->id] = LEN_OF_RACE;
     } else {
       info.finalPositions[myHorse->id] = myHorse->myPosition;
     }
@@ -80,12 +112,21 @@ int main(void) {
 
 
   // Important Vars
-
   Horse horses[numHorsesGlobal];
   info.credits = 500;
   info.start = 0;
   pthread_t myThreads[numHorsesGlobal];
 
+  myFunc functions[NUM_OF_FUNC] = {goodOutcome1, goodOutcome2, goodOutcome3, badOutcome1, badOutcome2};
+
+  myFunc *ptrFunction = info.functions;
+  myFunc *ptrFunction2 = functions;
+  for(int i = 0; i < NUM_OF_FUNC; i++){
+    *ptrFunction = *ptrFunction2;
+    ptrFunction++;
+    ptrFunction2++;
+    /* info.functions[i] = functions[i]; */
+  }
 
   // Naming the Horses
   Horse *ptr = horses;
@@ -191,7 +232,9 @@ int main(void) {
 
     sleep(5);
   }
-  printf("\e[1;1H\e[2J");
+  printf("\n");
+  printf("\n");
+  printf("\n");
   printf("Thanks for playing!\n");
 
   return TRUE;
