@@ -94,6 +94,10 @@ int main(void) {
   for(int i = 0; i < numHorsesGlobal; i++){
     printf("Enter the name for horse [%d]\n", i + 1);
     scanf("%s", ptr->myName);
+    while(strlen(ptr->myName) > MAX_LEN){
+      printf("Max: %d: ", MAX_LEN);
+      scanf("%s", ptr->myName);
+    }
     ptr->id = i;
     ptr->myPosition = 0;
     fflush(stdin);
@@ -112,10 +116,18 @@ int main(void) {
   }
   printf("Which horse do you want to bet on? (Number): ");
   scanf("%d", &info.personalHorse);
+  while(info.personalHorse > numHorsesGlobal || info.personalHorse < 0){
+    printf("Range should be [ 0, %d ] ", numHorsesGlobal);
+    scanf("%d", &info.personalHorse);
+  }
   fflush(stdin);
   printf("You have: $%d\n", info.credits);
   printf("How much do you want to use?: ");
   scanf("%d", &info.bet);
+  while(info.credits - info.bet < 0 || info.bet < 0){
+    printf("You dont have enough money for that! Try again: ");
+    scanf("%d", &info.bet);
+  }
   info.credits -= info.bet;
   fflush(stdin);
   printf("\e[1;1H\e[2J");
