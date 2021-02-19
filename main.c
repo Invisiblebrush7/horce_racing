@@ -12,7 +12,7 @@
 #define MAX_LEN 20 // Max length for names
 #define MAX_NUM 10 // Max number of horses
 #define MIN_NUM 2 // Min number of horses
-int numHorsesGlobal = 5;
+int numHorsesGlobal = MIN_NUM;
 
 typedef struct globalInfo{
   char names[MAX_NUM][MAX_LEN];
@@ -104,67 +104,95 @@ int main(void) {
     strcpy(info.names[i], ptr->myName);
     ptr++;
   }
-  printf("\e[1;1H\e[2J");
-  // Assigning the user's horse and bet
-  printf("--------------------------------\n");
-  printf("Now, lets assign your bet\n");
-  ptr = horses;
 
-  for(int i = 0; i < numHorsesGlobal; i++){
-    printf("[%d].- %s\n", ptr->id, ptr->myName);
-    ptr++;
-  }
-  printf("Which horse do you want to bet on? (Number): ");
-  scanf("%d", &info.personalHorse);
-  while(info.personalHorse > numHorsesGlobal || info.personalHorse < 0){
-    printf("Range should be [ 0, %d ] ", numHorsesGlobal);
+  //Start Game
+  while(info.credits > 0){
+    printf("\e[1;1H\e[2J");
+    // Cleaning old data
+    int *ptrPos = info.finalPositions;
+    ptr = horses;
+    for(int i = 0; i < numHorsesGlobal; i++){
+      *ptrPos = 0;
+      ptr->myPosition = 0;
+      ptr++;
+      ptrPos++;
+    }
+
+    // Assigning the user's horse and bet
+    printf("--------------------------------\n");
+    printf("Lets assign your bet\n");
+    ptr = horses;
+
+    for(int i = 0; i < numHorsesGlobal; i++){
+      printf("[%d].- %s\n", ptr->id, ptr->myName);
+      ptr++;
+    }
+    printf("Which horse do you want to bet on? (Number): ");
     scanf("%d", &info.personalHorse);
-  }
-  fflush(stdin);
-  printf("You have: $%d\n", info.credits);
-  printf("How much do you want to use?: ");
-  scanf("%d", &info.bet);
-  while(info.credits - info.bet < 0 || info.bet < 0){
-    printf("You dont have enough money for that! Try again: ");
+    while(info.personalHorse > numHorsesGlobal || info.personalHorse < 0){
+      printf("Range should be [ 0, %d ] ", numHorsesGlobal);
+      scanf("%d", &info.personalHorse);
+    }
+    fflush(stdin);
+    printf("You have: $%d\n", info.credits);
+    printf("How much do you want to use?: ");
     scanf("%d", &info.bet);
+    while(info.credits - info.bet < 0 || info.bet < 0){
+      printf("You dont have enough money for that! Try again: ");
+      scanf("%d", &info.bet);
+    }
+    info.credits -= info.bet;
+    fflush(stdin);
+    printf("\e[1;1H\e[2J");
+
+    // Nice printing of user's horse
+    printf("------------------------------------\n");
+    printf("              My Horse\n");
+    printf("Name: %s\n", info.names[info.personalHorse]);
+    printf("Id: %d\n", info.personalHorse);
+    printf("Bet: $%d\n", info.bet);
+    printf("------------------------------------\n");
+
+
+
+    printf("\n");
+    printf("\n");
+    printf("Start Race\n");
+    printf("3...\n");
+    sleep(1);
+    printf("2...\n");
+    sleep(1);
+    printf("1...\n");
+    sleep(1);
+
+    for(int i = 0; i < numHorsesGlobal; i++){
+      /*pthread_create(mythread, NULL, myFunction, args); */
+      pthread_create(&myThreads[i], NULL, horseThread, &horses[i]);
+    }
+    info.start = 1;
+    for(int i = 0; i < numHorsesGlobal; i++){
+      pthread_join(myThreads[i], NULL);
+    }
+
+    // Priting final positions
+    ptrPos = info.finalPositions;
+    printf("-----------Scoreboard-----------\n");
+    for(int i = 0; i < numHorsesGlobal; i++){
+      printf("Final position for Horse [%d] -> %d\n", i, *ptrPos);
+      ptrPos++;
+    }
+    ptr = horses;
+    for(int i = 0; i < numHorsesGlobal; i++){
+      if(ptr->id == info.personalHorse && ptr->myPosition >=15){
+        info.credits += (info.bet * 2);
+      }
+      ptr++;
+    }
+
+    sleep(5);
   }
-  info.credits -= info.bet;
-  fflush(stdin);
   printf("\e[1;1H\e[2J");
-
-  // Nice printing of user's horse
-  printf("------------------------------------\n");
-  printf("              My Horse\n");
-  printf("Name: %s\n", info.names[info.personalHorse]);
-  printf("Id: %d\n", info.personalHorse);
-  printf("Bet: $%d\n", info.bet);
-  printf("------------------------------------\n");
-
-
-
-  printf("\n");
-  printf("\n");
-  printf("Start Race\n");
-  printf("3...\n");
-  sleep(1);
-  printf("2...\n");
-  sleep(1);
-  printf("1...\n");
-  sleep(1);
-
-  for(int i = 0; i < numHorsesGlobal; i++){
-    /*pthread_create(mythread, NULL, myFunction, args); */
-    pthread_create(&myThreads[i], NULL, horseThread, &horses[i]);
-  }
-  info.start = 1;
-  for(int i = 0; i < numHorsesGlobal; i++){
-    pthread_join(myThreads[i], NULL);
-  }
-  int *ptrPositions = info.finalPositions;
-  for(int i = 0; i < numHorsesGlobal; i++){
-    printf("Final position for Horse [%d] -> %d\n", i, *ptrPositions);
-    ptrPositions++;
-  }
+  printf("Thanks for playing!\n");
 
   return TRUE;
 }
