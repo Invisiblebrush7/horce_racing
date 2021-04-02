@@ -28,11 +28,13 @@ typedef struct Horse{
   char name[MAX_LEN];
   struct Horse * nxt;
   struct Horse * prv;
+  int id;
 }Horse;
 
 typedef struct Race{
   Horse * head;
   int numOfHorses;
+  int lastId;
 } Race;
 
 
